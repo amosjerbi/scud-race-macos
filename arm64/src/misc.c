@@ -311,6 +311,14 @@ static MS int w_SDL_JoystickAttachVirtualEx(const SDL_VirtualJoystickDesc *desc)
     d.SendEffect = (int (*)(void *, const void *, int))rev_thunk((void *)desc->SendEffect);
     return SDL_JoystickAttachVirtualEx(&d);
 }
+/* SCUD_HOST_RUMBLE=0: pads report no rumble and no haptics, so the game fits no drive board (and spends nothing on force feedback) */
+static int rumble_off(void) { static int v = -1; if (v < 0) { const char *e = getenv("SCUD_HOST_RUMBLE"); v = e && *e == '0'; if (v) fprintf(stderr, "[host] rumble off (SCUD_HOST_RUMBLE=0)\n"); } return v; }
+static SDL_bool w_SDL_GameControllerHasRumble(SDL_GameController *g) { return rumble_off() ? SDL_FALSE : SDL_GameControllerHasRumble(g); }
+static SDL_bool w_SDL_GameControllerHasRumbleTriggers(SDL_GameController *g) { return rumble_off() ? SDL_FALSE : SDL_GameControllerHasRumbleTriggers(g); }
+static int w_SDL_GameControllerRumble(SDL_GameController *g, Uint16 lo, Uint16 hi, Uint32 ms) { return rumble_off() ? SDL_Unsupported() : SDL_GameControllerRumble(g, lo, hi, ms); }
+static int w_SDL_GameControllerRumbleTriggers(SDL_GameController *g, Uint16 l, Uint16 r, Uint32 ms) { return rumble_off() ? SDL_Unsupported() : SDL_GameControllerRumbleTriggers(g, l, r, ms); }
+static int w_SDL_JoystickIsHaptic(SDL_Joystick *j) { return rumble_off() ? 0 : SDL_JoystickIsHaptic(j); }
+static SDL_Haptic *w_SDL_HapticOpenFromJoystick(SDL_Joystick *j) { if (rumble_off()) { SDL_Unsupported(); return NULL; } return SDL_HapticOpenFromJoystick(j); }
 static SDL_JoystickGUID *w_SDL_JoystickGetGUID(SDL_JoystickGUID *out, SDL_Joystick *j) { *out = SDL_JoystickGetGUID(j); return out; }   /* Win64: hidden result pointer */
 static void w_SDL_JoystickGetGUIDString(const SDL_JoystickGUID *g, char *buf, int n) { SDL_JoystickGetGUIDString(*g, buf, n); }        /* Win64: 16-byte struct by reference */
 const struct import_entry sdl_special_table[] = {
@@ -321,6 +329,12 @@ const struct import_entry sdl_special_table[] = {
     { "SDL_RWFromFile", (void *)w_SDL_RWFromFile, "q:qq" },
     { "SDL_CreateWindow", (void *)w_SDL_CreateWindow, "q:qwwwww" },
     { "SDL_GetWindowSize", (void *)w_SDL_GetWindowSize, "v:qqq" },
+    { "SDL_GameControllerHasRumble", (void *)w_SDL_GameControllerHasRumble, "w:q" },
+    { "SDL_GameControllerHasRumbleTriggers", (void *)w_SDL_GameControllerHasRumbleTriggers, "w:q" },
+    { "SDL_GameControllerRumble", (void *)w_SDL_GameControllerRumble, "w:qhhw" },
+    { "SDL_GameControllerRumbleTriggers", (void *)w_SDL_GameControllerRumbleTriggers, "w:qhhw" },
+    { "SDL_JoystickIsHaptic", (void *)w_SDL_JoystickIsHaptic, "w:q" },
+    { "SDL_HapticOpenFromJoystick", (void *)w_SDL_HapticOpenFromJoystick, "q:q" },
     { "SDL_CreateRenderer", (void *)w_SDL_CreateRenderer, "q:qww" },
     { "SDL_RenderPresent", (void *)w_SDL_RenderPresent, "v:q" },
     { "SDL_OpenAudioDevice", (void *)w_SDL_OpenAudioDevice, "w:qwqqw" },

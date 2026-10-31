@@ -28,6 +28,6 @@ fi
 
 # GPU renderer (the game's Direct3D 11 renderer on GLES 3). Bilinear instead of trilinear texturing is cheaper on
 # small Mali GPUs; SCUD_HOST_GL_SCALE=0.75 draws the picture smaller and scales it up; SCUD_HOST_GL=0 = software renderer.
-export SCUD_HOST_NOGUI=1 SDL_AUDIODRIVER=${SDL_AUDIODRIVER:-alsa} SCUD_HOST_GL_TEXQ=${SCUD_HOST_GL_TEXQ:-1}
+export SCUD_HOST_NOGUI=1 SDL_AUDIODRIVER=${SDL_AUDIODRIVER:-alsa} SCUD_HOST_GL_TEXQ=${SCUD_HOST_GL_TEXQ:-0} SCUD_HOST_RUMBLE=${SCUD_HOST_RUMBLE:-0}
 "$GAMEDIR/scudrace-arm64"
 pm_finish

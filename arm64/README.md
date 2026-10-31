@@ -37,10 +37,12 @@ Measured on the RG DS (Mali-G52 MC1, Panfrost, 4x Cortex-A55), attract mode:
 |---|---|
 | box64 + x86-64 host | ~1.1 |
 | arm64 recompilation, software 3D | ~1.7 |
-| arm64 recompilation, D3D11 on GLES (this build) | ~19-25 |
+| arm64 recompilation, D3D11 on GLES, bilinear (`TEXQ=1`) | ~15 |
+| arm64 recompilation, D3D11 on GLES, point (`TEXQ=0`, launcher default) | ~22-23 |
 
 Settings (environment): `SCUD_HOST_GL_TEXQ` 0 point / 1 bilinear / 2 trilinear (the game's own filtering),
 `SCUD_HOST_GL_SCALE` (0.25-1) 3D picture size relative to the window, `SCUD_HOST_GL=0` software renderer,
+`SCUD_HOST_RUMBLE=0` turns controller rumble off (the RG DS launcher does this),
 `SCUD_HOST_FPS=1` prints frame rate and where the render thread's time goes.
 
 No game binary is distributed here: the arm64 binary contains the game's translated code and data, so build it yourself
