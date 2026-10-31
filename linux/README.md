@@ -21,7 +21,3 @@ roms/scud.zip       your own MAME standard split "scud" set
 
 Debug variables are the same as the macOS host (`SCUD_HOST_TRACE`, `SCUD_HOST_FPS`, `SCUDRACE_HOME`, ...); the Mach-thread sampler (`SCUD_HOST_SAMPLE`) is macOS-only.
 Game by https://github.com/wanszai/Scud-Race.
-
-## RG DS / ROCKNIX (aarch64) via box64
-The host also starts on aarch64 handhelds through `box64` (self-test passes, attract mode renders), but at about 1 fps on an RK3566 (Cortex-A55), so it is not playable there.
-The host uses its own fd-based stdio instead of libc's `FILE`, because libc FILEs crash when passed through box64's bridge, and looks SDL functions up with `dlsym` because box64's SDL bridge lacks some.

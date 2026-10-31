@@ -267,6 +267,7 @@ static MS int32_t clock_ms(void) { static uint64_t t0; uint64_t n = clock_gettim
 
 /* ------------------------------------------------------------------ process, startup, threads */
 static int g_argc; static char **g_argv; static char *g_arg_store[64];
+static void env_init(void); static char **g_envtab;
 static char **g_environ_var; static char **g_initenv_var; static int g_fmode, g_commode;
 extern char **environ;
 static MS int __getmainargs(int *argc, char ***argv, char ***env, int wild, void *si) {
@@ -277,7 +278,7 @@ static MS int __getmainargs(int *argc, char ***argv, char ***env, int wild, void
     for (int i = 1; i < g_argc && i < 63; i++) g_arg_store[i] = g_argv[i];
     g_arg_store[g_argc < 63 ? g_argc : 63] = NULL;
     *argc = g_argc < 63 ? g_argc : 63; *argv = g_arg_store; *env = environ;
-    g_environ_var = g_initenv_var = environ; return 0;
+    env_init(); g_environ_var = g_initenv_var = g_envtab; return 0;
 }
 static MS int __set_app_type(int t) { (void)t; return 0; }
 static MS void *__setusermatherr(void *f) { (void)f; return NULL; }
@@ -296,7 +297,28 @@ static MS void abort_ms(void) { log_msg("abort() called from PE address %p", __b
 static MS void _amsg_exit(int c) { fprintf(stderr, "\n[host] runtime error R%d\n", c); mf_flush_all(); _exit(255); }
 static MS void *signal_ms(int sig, void *h) { (void)sig; (void)h; return NULL; }
 static MS char *getenv_ms(const char *n) { return getenv(n); }
-static MS int _putenv(const char *s) { char *d = strdup(s), *eq = strchr(d, '='); if (!eq) { free(d); return -1; } *eq = 0; if (eq[1]) setenv(d, eq + 1, 1); else unsetenv(d); free(d); return 0; }
+/* The game's _environ is our own array, edited in place by _putenv (MSVCRT semantics: "NAME=" deletes). The game's scud_public_env_lock deletes every M3_* variable and
+   rescans _environ until none is left, so the array it scans must really change -- libc's environ does not under box64 (its bridge keeps a separate copy). */
+static char **g_envtab; static size_t g_envn, g_envcap;
+static void env_init(void) {
+    size_t n = 0; while (environ[n]) n++;
+    g_envcap = n + 256; g_envtab = calloc(g_envcap, sizeof *g_envtab);
+    for (size_t i = 0; i < n; i++) g_envtab[i] = strdup(environ[i]);
+    g_envn = n;
+}
+static MS int _putenv(const char *s) {
+    const char *eq = strchr(s, '='); if (!eq || eq == s) return -1;
+    size_t nl = (size_t)(eq - s), i;
+    for (i = 0; i < g_envn; i++) if (!strncmp(g_envtab[i], s, nl) && g_envtab[i][nl] == '=') break;
+    char name[512]; snprintf(name, sizeof name, "%.*s", (int)nl, s);
+    if (!eq[1]) {                                           /* "NAME=": remove */
+        if (i < g_envn) { free(g_envtab[i]); memmove(&g_envtab[i], &g_envtab[i + 1], (g_envn - i) * sizeof *g_envtab); g_envn--; }
+        unsetenv(name); return 0;
+    }
+    if (i < g_envn) { free(g_envtab[i]); g_envtab[i] = strdup(s); }
+    else if (g_envn + 1 < g_envcap) { g_envtab[g_envn++] = strdup(s); g_envtab[g_envn] = NULL; }
+    setenv(name, eq + 1, 1); return 0;
+}
 static pthread_mutex_t lock_tab[64]; static pthread_once_t lock_once = PTHREAD_ONCE_INIT;
 static void lock_init(void) { pthread_mutexattr_t a; pthread_mutexattr_init(&a); pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE); for (int i = 0; i < 64; i++) pthread_mutex_init(&lock_tab[i], &a); }
 static MS void _lock(int n) { pthread_once(&lock_once, lock_init); pthread_mutex_lock(&lock_tab[n & 63]); }

@@ -180,6 +180,13 @@ XF(float, atan2f, float y, float x) { return atan2f(y, x); }
 XF(double, atan2, double y, double x) { return atan2(y, x); }
 XF(float, fmodf, float x, float y) { return fmodf(x, y); }
 XF(double, fmod, double x, double y) { return fmod(x, y); }
+/* The game's scud_public_env_lock (start of main) deletes every M3_* environment variable, so its debug/tuning switches are unreachable.
+   Opt-in only (SCUD_HOST_KEEP_ENV=1, for offline tuning): make it return immediately. Never set it for online play. */
+static void patch_env_lock(uint8_t *base) {
+    if (!getenv("SCUD_HOST_KEEP_ENV") || (uint64_t)base != 0x140000000ull) return;
+    base[0x140172ee0ull - 0x140000000ull] = 0xC3;
+    log_msg("SCUD_HOST_KEEP_ENV: the game's M3_* environment lock is disabled");
+}
 static void patch_x87(uint8_t *base) {
     static const struct { uint64_t va; void *fn; } t[] = {
         { 0x140339b30, x87_log2f }, { 0x140339ac0, x87_log2 }, { 0x140339bd0, x87_nearbyintf }, { 0x140339b90, x87_nearbyint },
@@ -286,6 +293,7 @@ static int load_pe(const char *path, void **entry_out) {
         }
     }
     patch_x87(base);
+    patch_env_lock(base);
     for (int i = 0; i < fh->nsec; i++) {
         uint32_t vs = sh[i].vsize ? sh[i].vsize : sh[i].rawsize;
         size_t len = (vs + 0xFFF) & ~0xFFFul; if (!len) continue;
