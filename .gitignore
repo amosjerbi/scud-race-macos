@@ -1,0 +1,9 @@
+build/
+ScudRace.app/
+game/
+roms/
+*.zip
+*.7z
+*.exe
+online.ini
+.DS_Store
