@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <math.h>
 #include <ctype.h>
 #include <time.h>
@@ -18,50 +19,113 @@ extern HANDLE host_create_thread(size_t stack, MS DWORD (*fn)(void *), void *arg
 extern void host_end_thread(DWORD ret);
 extern void ms_setjmp(void), ms_longjmp(void);
 
-/* ------------------------------------------------------------------ stdio */
+/* ------------------------------------------------------------------ stdio
+   The game's FILE*s are our own small fd-based streams, not libc's: under box64 (x86 host on an ARM device) libc FILE objects handed through its
+   bridge fault inside fputc/fwrite, and a private layer is also independent of how the C library lays out FILE. */
+struct mf { int fd, err, eof, unget, unbuf, line; unsigned char rb[4096], wb[4096]; size_t rlen, rpos, wlen; struct mf *next; };
+typedef struct mf MF;
+static MF std_mf[3] = { { .fd = 0, .unget = -1 }, { .fd = 1, .unget = -1, .line = 1 }, { .fd = 2, .unget = -1, .unbuf = 1 } };
+static MF *mf_all; static pthread_mutex_t mf_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct { char b[48]; } fake_iob[3];
-static FILE *F(void *f) {
-    if ((char *)f >= (char *)fake_iob && (char *)f < (char *)fake_iob + sizeof fake_iob) {
-        switch (((char *)f - (char *)fake_iob) / 48) { case 0: return stdin; case 1: return stdout; default: return stderr; }
-    }
+static MF *F(void *f) {
+    if ((char *)f >= (char *)fake_iob && (char *)f < (char *)fake_iob + sizeof fake_iob) return &std_mf[((char *)f - (char *)fake_iob) / 48];
     return f;
 }
 static MS void *__iob_func(void) { return fake_iob; }
 
-static FILE *open_unix(const char *wpath, const char *mode) {
-    char p[2048]; win_path_to_unix(wpath, p, sizeof p); return fopen(p, mode);
+static int mf_flush(MF *f) {
+    size_t o = 0; while (o < f->wlen) { ssize_t n = write(f->fd, f->wb + o, f->wlen - o); if (n < 0) { if (errno == EINTR) continue; f->err = 1; f->wlen = 0; return EOF; } o += (size_t)n; }
+    f->wlen = 0; return 0;
+}
+static void mf_flush_all(void) { for (int i = 0; i < 3; i++) mf_flush(&std_mf[i]); pthread_mutex_lock(&mf_lock); for (MF *f = mf_all; f; f = f->next) mf_flush(f); pthread_mutex_unlock(&mf_lock); }
+static void mf_unread(MF *f) { if (f->rlen > f->rpos || f->unget >= 0) lseek(f->fd, -(off_t)(f->rlen - f->rpos) - (f->unget >= 0), SEEK_CUR); f->rlen = f->rpos = 0; f->unget = -1; }
+static int mf_getc(MF *f) {
+    if (f->unget >= 0) { int c = f->unget; f->unget = -1; return c; }
+    if (f->wlen && mf_flush(f)) return EOF;
+    if (f->rpos == f->rlen) {
+        ssize_t n; do n = read(f->fd, f->rb, sizeof f->rb); while (n < 0 && errno == EINTR);
+        if (n <= 0) { if (n < 0) f->err = 1; else f->eof = 1; return EOF; }
+        f->rlen = (size_t)n; f->rpos = 0;
+    }
+    return f->rb[f->rpos++];
+}
+static size_t mf_write(MF *f, const void *b, size_t n) {
+    if (f->rlen > f->rpos || f->unget >= 0) mf_unread(f);
+    const unsigned char *p = b; size_t left = n;
+    while (left) {
+        size_t room = sizeof f->wb - f->wlen, k = left < room ? left : room;
+        memcpy(f->wb + f->wlen, p, k); f->wlen += k; p += k; left -= k;
+        if (f->wlen == sizeof f->wb && mf_flush(f)) return n - left;
+    }
+    if (f->unbuf || (f->line && memchr(b, '\n', n))) mf_flush(f);
+    return n;
+}
+static size_t mf_read(MF *f, void *b, size_t n) { unsigned char *p = b; size_t i = 0; for (; i < n; i++) { int c = mf_getc(f); if (c == EOF) break; p[i] = (unsigned char)c; } return i; }
+static MF *mf_open(const char *path, const char *mode) {
+    int plus = strchr(mode, '+') != NULL, fl;
+    switch (mode[0]) { case 'r': fl = plus ? O_RDWR : O_RDONLY; break; case 'w': fl = (plus ? O_RDWR : O_WRONLY) | O_CREAT | O_TRUNC; break;
+                       case 'a': fl = (plus ? O_RDWR : O_WRONLY) | O_CREAT | O_APPEND; break; default: errno = EINVAL; return NULL; }
+    int fd = open(path, fl, 0666); if (fd < 0) return NULL;
+    MF *f = calloc(1, sizeof *f); f->fd = fd; f->unget = -1;
+    pthread_mutex_lock(&mf_lock); f->next = mf_all; mf_all = f; pthread_mutex_unlock(&mf_lock);
+    return f;
+}
+static int mf_close(MF *f) {
+    if (f >= std_mf && f < std_mf + 3) return mf_flush(f);
+    int r = mf_flush(f); r |= close(f->fd);
+    pthread_mutex_lock(&mf_lock); for (MF **pp = &mf_all; *pp; pp = &(*pp)->next) if (*pp == f) { *pp = f->next; break; } pthread_mutex_unlock(&mf_lock);
+    free(f); return r ? EOF : 0;
+}
+static int64_t mf_tell(MF *f) { off_t o = lseek(f->fd, 0, SEEK_CUR); if (o < 0) return -1; return o - (int64_t)(f->rlen - f->rpos) - (f->unget >= 0) + (int64_t)f->wlen; }
+static int mf_seek(MF *f, int64_t off, int whence) {
+    mf_flush(f);
+    if (whence == SEEK_CUR) off -= (int64_t)(f->rlen - f->rpos) + (f->unget >= 0);
+    f->rlen = f->rpos = 0; f->unget = -1; f->eof = 0;
+    return lseek(f->fd, (off_t)off, whence) < 0 ? -1 : 0;
+}
+
+static MF *open_unix(const char *wpath, const char *mode) {
+    char p[2048]; win_path_to_unix(wpath, p, sizeof p); return mf_open(p, mode);
 }
 static void wmode(const WCHAR *w, char *out, size_t cap) { size_t n = utf16_to_utf8(w, -1, out, cap - 1); out[n] = 0; }
-static MS FILE *fopen_ms(const char *p, const char *m) { return open_unix(p, m); }
-static MS FILE *_wfopen(const WCHAR *p, const WCHAR *m) { char pp[2048], mm[16]; win_wpath_to_unix(p, pp, sizeof pp); wmode(m, mm, sizeof mm); return fopen(pp, mm); }
-static MS int _wfopen_s(FILE **out, const WCHAR *p, const WCHAR *m) { *out = _wfopen(p, m); return *out ? 0 : errno; }
-/* The game points stderr/stdout at NUL because a Windows GUI app has no console; on macOS keep the diagnostics. */
-static int silencing_std(void *f, const char *unixpath) { FILE *x = F(f); return (x == stderr || x == stdout) && !strcmp(unixpath, "/dev/null") && !getenv("SCUD_HOST_ALLOW_SILENCE"); }
-static MS FILE *freopen_ms(const char *p, const char *m, void *f) { char pp[2048]; win_path_to_unix(p, pp, sizeof pp); if (silencing_std(f, pp)) return F(f); return freopen(pp, m, F(f)); }
-static MS FILE *_wfreopen(const WCHAR *p, const WCHAR *m, void *f) { char pp[2048], mm[16]; win_wpath_to_unix(p, pp, sizeof pp); wmode(m, mm, sizeof mm); if (silencing_std(f, pp)) return F(f); return freopen(pp, mm, F(f)); }
-static MS int _wfreopen_s(FILE **out, const WCHAR *p, const WCHAR *m, void *f) { *out = _wfreopen(p, m, f); return *out ? 0 : errno; }
-static MS int fclose_ms(void *f) { FILE *x = F(f); if (x == stdin || x == stdout || x == stderr) return 0; return fclose(x); }
-static MS int feof_ms(void *f) { return feof(F(f)); }
-static MS int ferror_ms(void *f) { return ferror(F(f)); }
-static MS int fflush_ms(void *f) { return fflush(f ? F(f) : NULL); }
-static MS int fgetc_ms(void *f) { return fgetc(F(f)); }
-static MS int getc_ms(void *f) { return getc(F(f)); }
-static MS int ungetc_ms(int c, void *f) { return ungetc(c, F(f)); }
-static MS char *fgets_ms(char *b, int n, void *f) { return fgets(b, n, F(f)); }
-static MS int fputc_ms(int c, void *f) { return fputc(c, F(f)); }
-static MS int fputs_ms(const char *s, void *f) { return fputs(s, F(f)); }
-static MS size_t fread_ms(void *b, size_t s, size_t n, void *f) { return fread(b, s, n, F(f)); }
-static MS size_t fwrite_ms(const void *b, size_t s, size_t n, void *f) { return fwrite(b, s, n, F(f)); }
-static MS int fseek_ms(void *f, int32_t off, int whence) { return fseek(F(f), off, whence); }
-static MS int32_t ftell_ms(void *f) { return (int32_t)ftell(F(f)); }
-static MS int fgetpos_ms(void *f, fpos_t *p) { return fgetpos(F(f), p); }
-static MS int fsetpos_ms(void *f, const fpos_t *p) { return fsetpos(F(f), p); }
-static MS void rewind_ms(void *f) { rewind(F(f)); }
-static MS int setvbuf_ms(void *f, char *buf, int mode, size_t size) {
-    int m = mode == 0 ? _IOFBF : (mode == 0x40 ? _IOLBF : _IONBF); return setvbuf(F(f), buf, m, size);
+static MS void *fopen_ms(const char *p, const char *m) { return open_unix(p, m); }
+static MS void *_wfopen(const WCHAR *p, const WCHAR *m) { char pp[2048], mm[16]; win_wpath_to_unix(p, pp, sizeof pp); wmode(m, mm, sizeof mm); return mf_open(pp, mm); }
+static MS int _wfopen_s(void **out, const WCHAR *p, const WCHAR *m) { *out = _wfopen(p, m); return *out ? 0 : errno; }
+/* The game points stderr/stdout at NUL because a Windows GUI app has no console; keep the diagnostics. */
+static int silencing_std(void *f, const char *unixpath) { MF *x = F(f); return (x == &std_mf[1] || x == &std_mf[2]) && !strcmp(unixpath, "/dev/null") && !getenv("SCUD_HOST_ALLOW_SILENCE"); }
+static MS void *freopen_ms(const char *p, const char *m, void *f) {
+    char pp[2048]; win_path_to_unix(p, pp, sizeof pp); if (silencing_std(f, pp)) return F(f);
+    MF *o = F(f), *n = mf_open(pp, m); if (!n) return NULL;
+    if (o >= std_mf && o < std_mf + 3) { mf_flush(o); dup2(n->fd, o->fd); mf_close(n); return o; }
+    mf_close(o); return n;
 }
-static MS FILE *tmpfile_ms(void) { return tmpfile(); }
-static MS int _fileno_ms(void *f) { return fileno(F(f)); }
+static MS void *_wfreopen(const WCHAR *p, const WCHAR *m, void *f) { char pp[2048], mm[16]; win_wpath_to_unix(p, pp, sizeof pp); wmode(m, mm, sizeof mm); return freopen_ms(pp, mm, f); }
+static MS int _wfreopen_s(void **out, const WCHAR *p, const WCHAR *m, void *f) { *out = _wfreopen(p, m, f); return *out ? 0 : errno; }
+static MS int fclose_ms(void *f) { return mf_close(F(f)); }
+static MS int feof_ms(void *f) { return F(f)->eof; }
+static MS int ferror_ms(void *f) { return F(f)->err; }
+static MS void clearerr_ms(void *f) { F(f)->err = F(f)->eof = 0; }
+static MS int fflush_ms(void *f) { if (!f) { mf_flush_all(); return 0; } return mf_flush(F(f)); }
+static MS int fgetc_ms(void *f) { return mf_getc(F(f)); }
+static MS int getc_ms(void *f) { return mf_getc(F(f)); }
+static MS int ungetc_ms(int c, void *f) { MF *x = F(f); if (c == EOF || x->unget >= 0) return EOF; x->unget = c & 0xFF; x->eof = 0; return c; }
+static MS char *fgets_ms(char *b, int n, void *f) {
+    MF *x = F(f); int i = 0; while (i < n - 1) { int c = mf_getc(x); if (c == EOF) break; b[i++] = (char)c; if (c == '\n') break; }
+    if (!i) return NULL; b[i] = 0; return b;
+}
+static MS int fputc_ms(int c, void *f) { unsigned char ch = (unsigned char)c; return mf_write(F(f), &ch, 1) == 1 ? c : EOF; }
+static MS int fputs_ms(const char *s, void *f) { size_t n = strlen(s); return mf_write(F(f), s, n) == n ? 0 : EOF; }
+static MS size_t fread_ms(void *b, size_t s, size_t n, void *f) { if (!s || !n) return 0; return mf_read(F(f), b, s * n) / s; }
+static MS size_t fwrite_ms(const void *b, size_t s, size_t n, void *f) { if (!s || !n) return 0; return mf_write(F(f), b, s * n) / s; }
+static MS int fseek_ms(void *f, int32_t off, int whence) { return mf_seek(F(f), off, whence); }
+static MS int32_t ftell_ms(void *f) { return (int32_t)mf_tell(F(f)); }
+static MS int fgetpos_ms(void *f, int64_t *p) { int64_t t = mf_tell(F(f)); if (t < 0) return -1; *p = t; return 0; }
+static MS int fsetpos_ms(void *f, const int64_t *p) { return mf_seek(F(f), *p, SEEK_SET); }
+static MS void rewind_ms(void *f) { mf_seek(F(f), 0, SEEK_SET); F(f)->err = 0; }
+static MS int setvbuf_ms(void *f, char *buf, int mode, size_t size) { (void)buf; (void)size; MF *x = F(f); x->unbuf = mode == 0x04; x->line = mode == 0x40; return 0; }
+static MS void *tmpfile_ms(void) { char t[] = "/tmp/scudXXXXXX"; int fd = mkstemp(t); if (fd < 0) return NULL; unlink(t); MF *f = calloc(1, sizeof *f); f->fd = fd; f->unget = -1;
+    pthread_mutex_lock(&mf_lock); f->next = mf_all; mf_all = f; pthread_mutex_unlock(&mf_lock); return f; }
+static MS int _fileno_ms(void *f) { return F(f)->fd; }
 static MS int64_t _filelengthi64(int fd) { struct stat st; return fstat(fd, &st) ? -1 : (int64_t)st.st_size; }
 static MS int remove_ms(const char *p) { char pp[2048]; win_path_to_unix(p, pp, sizeof pp); return remove(pp); }
 static MS int rename_ms(const char *a, const char *b) { char pa[2048], pb[2048]; win_path_to_unix(a, pa, sizeof pa); win_path_to_unix(b, pb, sizeof pb); return rename(pa, pb); }
@@ -134,7 +198,7 @@ static void ms_format(struct sbuf *out, const char *f, __builtin_ms_va_list ap) 
 }
 static MS int vfprintf_ms(void *f, const char *fmt, __builtin_ms_va_list ap) {
     struct sbuf b = { 0 }; ms_format(&b, fmt, ap);
-    size_t n = b.n; if (b.p) fwrite(b.p, 1, n, F(f)); free(b.p); return (int)n;
+    size_t n = b.n; if (b.p) mf_write(F(f), b.p, n); free(b.p); return (int)n;
 }
 static MS int fprintf_ms(void *f, const char *fmt, ...) {
     __builtin_ms_va_list ap; __builtin_ms_va_start(ap, fmt);
@@ -226,10 +290,10 @@ static MS void _cexit(void) {}
 static MS void (*onexit_list[MAX_ONEXIT])(void); static int onexit_n;
 static MS void *_onexit(void *fn) { if (onexit_n < MAX_ONEXIT) onexit_list[onexit_n++] = fn; return fn; }
 static void run_onexit(void) { while (onexit_n > 0) { void (*MS f)(void) = onexit_list[--onexit_n]; f(); } }
-static MS void exit_ms(int c) { log_msg("exit(%d) called from PE address %p", c, __builtin_return_address(0)); run_onexit(); fflush(NULL); exit(c); }
-static MS void _exit_ms(int c) { log_msg("_exit(%d) called from PE address %p", c, __builtin_return_address(0)); fflush(NULL); _exit(c); }
-static MS void abort_ms(void) { log_msg("abort() called from PE address %p", __builtin_return_address(0)); fflush(NULL); fputs("\n[host] the game called abort()\n", stderr); abort(); }
-static MS void _amsg_exit(int c) { fprintf(stderr, "\n[host] runtime error R%d\n", c); fflush(NULL); _exit(255); }
+static MS void exit_ms(int c) { log_msg("exit(%d) called from PE address %p", c, __builtin_return_address(0)); run_onexit(); mf_flush_all(); exit(c); }
+static MS void _exit_ms(int c) { log_msg("_exit(%d) called from PE address %p", c, __builtin_return_address(0)); mf_flush_all(); _exit(c); }
+static MS void abort_ms(void) { log_msg("abort() called from PE address %p", __builtin_return_address(0)); mf_flush_all(); fputs("\n[host] the game called abort()\n", stderr); abort(); }
+static MS void _amsg_exit(int c) { fprintf(stderr, "\n[host] runtime error R%d\n", c); mf_flush_all(); _exit(255); }
 static MS void *signal_ms(int sig, void *h) { (void)sig; (void)h; return NULL; }
 static MS char *getenv_ms(const char *n) { return getenv(n); }
 static MS int _putenv(const char *s) { char *d = strdup(s), *eq = strchr(d, '='); if (!eq) { free(d); return -1; } *eq = 0; if (eq[1]) setenv(d, eq + 1, 1); else unsetenv(d); free(d); return 0; }
@@ -253,7 +317,7 @@ const struct import_entry crt_table[] = {
     E2("_utime64", _utime64), E2("_wcsdup", _wcsdup_ms), E2("_wcsicmp", _wcsicmp_ms), E2("_wfopen", _wfopen), E2("_wfopen_s", _wfopen_s),
     E2("_wfreopen", _wfreopen), E2("_wfreopen_s", _wfreopen_s), E2("_wstat64", _wstat64), E2("_wtoi64", _wtoi64), E2("abort", abort_ms),
     E2("acos", acos_ms), E2("atan", atan_ms), E2("atof", atof_ms), E2("atoi", atoi_ms), E2("atol", atol_ms), E2("calloc", calloc_ms), E2("clock", clock_ms),
-    E2("exit", exit_ms), E2("fclose", fclose_ms), E2("feof", feof_ms), E2("ferror", ferror_ms), E2("fflush", fflush_ms), E2("fgetc", fgetc_ms),
+    E2("clearerr", clearerr_ms), E2("exit", exit_ms), E2("fclose", fclose_ms), E2("feof", feof_ms), E2("ferror", ferror_ms), E2("fflush", fflush_ms), E2("fgetc", fgetc_ms),
     E2("fgetpos", fgetpos_ms), E2("fgets", fgets_ms), E2("fopen", fopen_ms), E2("fprintf", fprintf_ms), E2("fputc", fputc_ms), E2("fputs", fputs_ms),
     E2("fread", fread_ms), E2("free", free_ms), E2("freopen", freopen_ms), E2("fseek", fseek_ms), E2("fsetpos", fsetpos_ms), E2("ftell", ftell_ms),
     E2("fwrite", fwrite_ms), E2("getc", getc_ms), E2("getenv", getenv_ms), E2("isalnum", isalnum_ms), E2("isspace", isspace_ms), E2("isxdigit", isxdigit_ms),
