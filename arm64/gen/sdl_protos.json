@@ -1,0 +1,1056 @@
+{
+ "SDL_malloc": {
+  "type": "void *(size_t)",
+  "params": [
+   "size_t"
+  ],
+  "variadic": false
+ },
+ "SDL_free": {
+  "type": "void (void *)",
+  "params": [
+   "void *"
+  ],
+  "variadic": false
+ },
+ "SDL_memset": {
+  "type": "void *(void *, int, size_t)",
+  "params": [
+   "void *",
+   "int",
+   "size_t"
+  ],
+  "variadic": false
+ },
+ "SDL_strcasecmp": {
+  "type": "int (const char *, const char *)",
+  "params": [
+   "const char *",
+   "const char *"
+  ],
+  "variadic": false
+ },
+ "SDL_AtomicSet": {
+  "type": "int (SDL_atomic_t *, int)",
+  "params": [
+   "SDL_atomic_t *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_AtomicGet": {
+  "type": "int (SDL_atomic_t *)",
+  "params": [
+   "SDL_atomic_t *"
+  ],
+  "variadic": false
+ },
+ "SDL_GetError": {
+  "type": "const char *(void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_CreateMutex": {
+  "type": "SDL_mutex *(void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_LockMutex": {
+  "type": "int (SDL_mutex *)",
+  "params": [
+   "SDL_mutex *"
+  ],
+  "variadic": false
+ },
+ "SDL_UnlockMutex": {
+  "type": "int (SDL_mutex *)",
+  "params": [
+   "SDL_mutex *"
+  ],
+  "variadic": false
+ },
+ "SDL_DestroyMutex": {
+  "type": "void (SDL_mutex *)",
+  "params": [
+   "SDL_mutex *"
+  ],
+  "variadic": false
+ },
+ "SDL_CreateCond": {
+  "type": "SDL_cond *(void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_DestroyCond": {
+  "type": "void (SDL_cond *)",
+  "params": [
+   "SDL_cond *"
+  ],
+  "variadic": false
+ },
+ "SDL_CondSignal": {
+  "type": "int (SDL_cond *)",
+  "params": [
+   "SDL_cond *"
+  ],
+  "variadic": false
+ },
+ "SDL_CondBroadcast": {
+  "type": "int (SDL_cond *)",
+  "params": [
+   "SDL_cond *"
+  ],
+  "variadic": false
+ },
+ "SDL_CondWaitTimeout": {
+  "type": "int (SDL_cond *, SDL_mutex *, Uint32)",
+  "params": [
+   "SDL_cond *",
+   "SDL_mutex *",
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_CreateThread": {
+  "type": "SDL_Thread *(SDL_ThreadFunction, const char *, void *)",
+  "params": [
+   "SDL_ThreadFunction",
+   "const char *",
+   "void *"
+  ],
+  "variadic": false
+ },
+ "SDL_SetThreadPriority": {
+  "type": "int (SDL_ThreadPriority)",
+  "params": [
+   "SDL_ThreadPriority"
+  ],
+  "variadic": false
+ },
+ "SDL_WaitThread": {
+  "type": "void (SDL_Thread *, int *)",
+  "params": [
+   "SDL_Thread *",
+   "int *"
+  ],
+  "variadic": false
+ },
+ "SDL_RWFromFile": {
+  "type": "SDL_RWops *(const char *, const char *)",
+  "params": [
+   "const char *",
+   "const char *"
+  ],
+  "variadic": false
+ },
+ "SDL_OpenAudioDevice": {
+  "type": "SDL_AudioDeviceID (const char *, int, const SDL_AudioSpec *, SDL_AudioSpec *, int)",
+  "params": [
+   "const char *",
+   "int",
+   "const SDL_AudioSpec *",
+   "SDL_AudioSpec *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_GetAudioDeviceStatus": {
+  "type": "SDL_AudioStatus (SDL_AudioDeviceID)",
+  "params": [
+   "SDL_AudioDeviceID"
+  ],
+  "variadic": false
+ },
+ "SDL_PauseAudioDevice": {
+  "type": "void (SDL_AudioDeviceID, int)",
+  "params": [
+   "SDL_AudioDeviceID",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_LoadWAV_RW": {
+  "type": "SDL_AudioSpec *(SDL_RWops *, int, SDL_AudioSpec *, Uint8 **, Uint32 *)",
+  "params": [
+   "SDL_RWops *",
+   "int",
+   "SDL_AudioSpec *",
+   "Uint8 **",
+   "Uint32 *"
+  ],
+  "variadic": false
+ },
+ "SDL_FreeWAV": {
+  "type": "void (Uint8 *)",
+  "params": [
+   "Uint8 *"
+  ],
+  "variadic": false
+ },
+ "SDL_BuildAudioCVT": {
+  "type": "int (SDL_AudioCVT *, SDL_AudioFormat, Uint8, int, SDL_AudioFormat, Uint8, int)",
+  "params": [
+   "SDL_AudioCVT *",
+   "SDL_AudioFormat",
+   "Uint8",
+   "int",
+   "SDL_AudioFormat",
+   "Uint8",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_ConvertAudio": {
+  "type": "int (SDL_AudioCVT *)",
+  "params": [
+   "SDL_AudioCVT *"
+  ],
+  "variadic": false
+ },
+ "SDL_QueueAudio": {
+  "type": "int (SDL_AudioDeviceID, const void *, Uint32)",
+  "params": [
+   "SDL_AudioDeviceID",
+   "const void *",
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_GetQueuedAudioSize": {
+  "type": "Uint32 (SDL_AudioDeviceID)",
+  "params": [
+   "SDL_AudioDeviceID"
+  ],
+  "variadic": false
+ },
+ "SDL_LockAudioDevice": {
+  "type": "void (SDL_AudioDeviceID)",
+  "params": [
+   "SDL_AudioDeviceID"
+  ],
+  "variadic": false
+ },
+ "SDL_UnlockAudioDevice": {
+  "type": "void (SDL_AudioDeviceID)",
+  "params": [
+   "SDL_AudioDeviceID"
+  ],
+  "variadic": false
+ },
+ "SDL_CloseAudioDevice": {
+  "type": "void (SDL_AudioDeviceID)",
+  "params": [
+   "SDL_AudioDeviceID"
+  ],
+  "variadic": false
+ },
+ "SDL_GetDisplayUsableBounds": {
+  "type": "int (int, SDL_Rect *)",
+  "params": [
+   "int",
+   "SDL_Rect *"
+  ],
+  "variadic": false
+ },
+ "SDL_GetWindowDisplayIndex": {
+  "type": "int (SDL_Window *)",
+  "params": [
+   "SDL_Window *"
+  ],
+  "variadic": false
+ },
+ "SDL_CreateWindow": {
+  "type": "SDL_Window *(const char *, int, int, int, int, Uint32)",
+  "params": [
+   "const char *",
+   "int",
+   "int",
+   "int",
+   "int",
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_SetWindowTitle": {
+  "type": "void (SDL_Window *, const char *)",
+  "params": [
+   "SDL_Window *",
+   "const char *"
+  ],
+  "variadic": false
+ },
+ "SDL_SetWindowSize": {
+  "type": "void (SDL_Window *, int, int)",
+  "params": [
+   "SDL_Window *",
+   "int",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_GetWindowSize": {
+  "type": "void (SDL_Window *, int *, int *)",
+  "params": [
+   "SDL_Window *",
+   "int *",
+   "int *"
+  ],
+  "variadic": false
+ },
+ "SDL_SetWindowFullscreen": {
+  "type": "int (SDL_Window *, Uint32)",
+  "params": [
+   "SDL_Window *",
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_DestroyWindow": {
+  "type": "void (SDL_Window *)",
+  "params": [
+   "SDL_Window *"
+  ],
+  "variadic": false
+ },
+ "SDL_GetKeyboardState": {
+  "type": "const Uint8 *(int *)",
+  "params": [
+   "int *"
+  ],
+  "variadic": false
+ },
+ "SDL_GetScancodeName": {
+  "type": "const char *(SDL_Scancode)",
+  "params": [
+   "SDL_Scancode"
+  ],
+  "variadic": false
+ },
+ "SDL_GetScancodeFromName": {
+  "type": "SDL_Scancode (const char *)",
+  "params": [
+   "const char *"
+  ],
+  "variadic": false
+ },
+ "SDL_StartTextInput": {
+  "type": "void (void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_StopTextInput": {
+  "type": "void (void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_GetMouseState": {
+  "type": "Uint32 (int *, int *)",
+  "params": [
+   "int *",
+   "int *"
+  ],
+  "variadic": false
+ },
+ "SDL_ShowCursor": {
+  "type": "int (int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_LockJoysticks": {
+  "type": "void (void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_UnlockJoysticks": {
+  "type": "void (void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_NumJoysticks": {
+  "type": "int (void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_JoystickNameForIndex": {
+  "type": "const char *(int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetDeviceVendor": {
+  "type": "Uint16 (int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetDeviceProduct": {
+  "type": "Uint16 (int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetDeviceType": {
+  "type": "SDL_JoystickType (int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetDeviceInstanceID": {
+  "type": "SDL_JoystickID (int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickOpen": {
+  "type": "SDL_Joystick *(int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickFromInstanceID": {
+  "type": "SDL_Joystick *(SDL_JoystickID)",
+  "params": [
+   "SDL_JoystickID"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickAttachVirtualEx": {
+  "type": "int (const SDL_VirtualJoystickDesc *)",
+  "params": [
+   "const SDL_VirtualJoystickDesc *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickDetachVirtual": {
+  "type": "int (int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickIsVirtual": {
+  "type": "SDL_bool (int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickSetVirtualAxis": {
+  "type": "int (SDL_Joystick *, int, Sint16)",
+  "params": [
+   "SDL_Joystick *",
+   "int",
+   "Sint16"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickSetVirtualButton": {
+  "type": "int (SDL_Joystick *, int, Uint8)",
+  "params": [
+   "SDL_Joystick *",
+   "int",
+   "Uint8"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickSetVirtualHat": {
+  "type": "int (SDL_Joystick *, int, Uint8)",
+  "params": [
+   "SDL_Joystick *",
+   "int",
+   "Uint8"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickName": {
+  "type": "const char *(SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickPath": {
+  "type": "const char *(SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetGUID": {
+  "type": "SDL_JoystickGUID (SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetVendor": {
+  "type": "Uint16 (SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetProduct": {
+  "type": "Uint16 (SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetSerial": {
+  "type": "const char *(SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetGUIDString": {
+  "type": "void (SDL_JoystickGUID, char *, int)",
+  "params": [
+   "SDL_JoystickGUID",
+   "char *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetAttached": {
+  "type": "SDL_bool (SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickInstanceID": {
+  "type": "SDL_JoystickID (SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickNumAxes": {
+  "type": "int (SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickNumHats": {
+  "type": "int (SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickNumButtons": {
+  "type": "int (SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickUpdate": {
+  "type": "void (void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_JoystickGetAxis": {
+  "type": "Sint16 (SDL_Joystick *, int)",
+  "params": [
+   "SDL_Joystick *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetAxisInitialState": {
+  "type": "SDL_bool (SDL_Joystick *, int, Sint16 *)",
+  "params": [
+   "SDL_Joystick *",
+   "int",
+   "Sint16 *"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetHat": {
+  "type": "Uint8 (SDL_Joystick *, int)",
+  "params": [
+   "SDL_Joystick *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickGetButton": {
+  "type": "Uint8 (SDL_Joystick *, int)",
+  "params": [
+   "SDL_Joystick *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_JoystickClose": {
+  "type": "void (SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_IsGameController": {
+  "type": "SDL_bool (int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerOpen": {
+  "type": "SDL_GameController *(int)",
+  "params": [
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerName": {
+  "type": "const char *(SDL_GameController *)",
+  "params": [
+   "SDL_GameController *"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerPath": {
+  "type": "const char *(SDL_GameController *)",
+  "params": [
+   "SDL_GameController *"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerGetJoystick": {
+  "type": "SDL_Joystick *(SDL_GameController *)",
+  "params": [
+   "SDL_GameController *"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerGetAxis": {
+  "type": "Sint16 (SDL_GameController *, SDL_GameControllerAxis)",
+  "params": [
+   "SDL_GameController *",
+   "SDL_GameControllerAxis"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerGetButton": {
+  "type": "Uint8 (SDL_GameController *, SDL_GameControllerButton)",
+  "params": [
+   "SDL_GameController *",
+   "SDL_GameControllerButton"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerRumble": {
+  "type": "int (SDL_GameController *, Uint16, Uint16, Uint32)",
+  "params": [
+   "SDL_GameController *",
+   "Uint16",
+   "Uint16",
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerRumbleTriggers": {
+  "type": "int (SDL_GameController *, Uint16, Uint16, Uint32)",
+  "params": [
+   "SDL_GameController *",
+   "Uint16",
+   "Uint16",
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerHasRumble": {
+  "type": "SDL_bool (SDL_GameController *)",
+  "params": [
+   "SDL_GameController *"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerHasRumbleTriggers": {
+  "type": "SDL_bool (SDL_GameController *)",
+  "params": [
+   "SDL_GameController *"
+  ],
+  "variadic": false
+ },
+ "SDL_GameControllerClose": {
+  "type": "void (SDL_GameController *)",
+  "params": [
+   "SDL_GameController *"
+  ],
+  "variadic": false
+ },
+ "SDL_PollEvent": {
+  "type": "int (SDL_Event *)",
+  "params": [
+   "SDL_Event *"
+  ],
+  "variadic": false
+ },
+ "SDL_EventState": {
+  "type": "Uint8 (Uint32, int)",
+  "params": [
+   "Uint32",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_GetBasePath": {
+  "type": "char *(void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_JoystickIsHaptic": {
+  "type": "int (SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticOpenFromJoystick": {
+  "type": "SDL_Haptic *(SDL_Joystick *)",
+  "params": [
+   "SDL_Joystick *"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticClose": {
+  "type": "void (SDL_Haptic *)",
+  "params": [
+   "SDL_Haptic *"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticNumEffects": {
+  "type": "int (SDL_Haptic *)",
+  "params": [
+   "SDL_Haptic *"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticQuery": {
+  "type": "unsigned int (SDL_Haptic *)",
+  "params": [
+   "SDL_Haptic *"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticNewEffect": {
+  "type": "int (SDL_Haptic *, SDL_HapticEffect *)",
+  "params": [
+   "SDL_Haptic *",
+   "SDL_HapticEffect *"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticUpdateEffect": {
+  "type": "int (SDL_Haptic *, int, SDL_HapticEffect *)",
+  "params": [
+   "SDL_Haptic *",
+   "int",
+   "SDL_HapticEffect *"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticRunEffect": {
+  "type": "int (SDL_Haptic *, int, Uint32)",
+  "params": [
+   "SDL_Haptic *",
+   "int",
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticStopEffect": {
+  "type": "int (SDL_Haptic *, int)",
+  "params": [
+   "SDL_Haptic *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticDestroyEffect": {
+  "type": "void (SDL_Haptic *, int)",
+  "params": [
+   "SDL_Haptic *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticSetGain": {
+  "type": "int (SDL_Haptic *, int)",
+  "params": [
+   "SDL_Haptic *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_HapticSetAutocenter": {
+  "type": "int (SDL_Haptic *, int)",
+  "params": [
+   "SDL_Haptic *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_SetHintWithPriority": {
+  "type": "SDL_bool (const char *, const char *, SDL_HintPriority)",
+  "params": [
+   "const char *",
+   "const char *",
+   "SDL_HintPriority"
+  ],
+  "variadic": false
+ },
+ "SDL_SetHint": {
+  "type": "SDL_bool (const char *, const char *)",
+  "params": [
+   "const char *",
+   "const char *"
+  ],
+  "variadic": false
+ },
+ "SDL_ResetHint": {
+  "type": "SDL_bool (const char *)",
+  "params": [
+   "const char *"
+  ],
+  "variadic": false
+ },
+ "SDL_GetHint": {
+  "type": "const char *(const char *)",
+  "params": [
+   "const char *"
+  ],
+  "variadic": false
+ },
+ "SDL_CreateRenderer": {
+  "type": "SDL_Renderer *(SDL_Window *, int, Uint32)",
+  "params": [
+   "SDL_Window *",
+   "int",
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_GetRendererOutputSize": {
+  "type": "int (SDL_Renderer *, int *, int *)",
+  "params": [
+   "SDL_Renderer *",
+   "int *",
+   "int *"
+  ],
+  "variadic": false
+ },
+ "SDL_CreateTexture": {
+  "type": "SDL_Texture *(SDL_Renderer *, Uint32, int, int, int)",
+  "params": [
+   "SDL_Renderer *",
+   "Uint32",
+   "int",
+   "int",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_SetTextureBlendMode": {
+  "type": "int (SDL_Texture *, SDL_BlendMode)",
+  "params": [
+   "SDL_Texture *",
+   "SDL_BlendMode"
+  ],
+  "variadic": false
+ },
+ "SDL_SetTextureScaleMode": {
+  "type": "int (SDL_Texture *, SDL_ScaleMode)",
+  "params": [
+   "SDL_Texture *",
+   "SDL_ScaleMode"
+  ],
+  "variadic": false
+ },
+ "SDL_UpdateTexture": {
+  "type": "int (SDL_Texture *, const SDL_Rect *, const void *, int)",
+  "params": [
+   "SDL_Texture *",
+   "const SDL_Rect *",
+   "const void *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_SetRenderDrawColor": {
+  "type": "int (SDL_Renderer *, Uint8, Uint8, Uint8, Uint8)",
+  "params": [
+   "SDL_Renderer *",
+   "Uint8",
+   "Uint8",
+   "Uint8",
+   "Uint8"
+  ],
+  "variadic": false
+ },
+ "SDL_SetRenderDrawBlendMode": {
+  "type": "int (SDL_Renderer *, SDL_BlendMode)",
+  "params": [
+   "SDL_Renderer *",
+   "SDL_BlendMode"
+  ],
+  "variadic": false
+ },
+ "SDL_RenderClear": {
+  "type": "int (SDL_Renderer *)",
+  "params": [
+   "SDL_Renderer *"
+  ],
+  "variadic": false
+ },
+ "SDL_RenderDrawLine": {
+  "type": "int (SDL_Renderer *, int, int, int, int)",
+  "params": [
+   "SDL_Renderer *",
+   "int",
+   "int",
+   "int",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_RenderFillRect": {
+  "type": "int (SDL_Renderer *, const SDL_Rect *)",
+  "params": [
+   "SDL_Renderer *",
+   "const SDL_Rect *"
+  ],
+  "variadic": false
+ },
+ "SDL_RenderFillRects": {
+  "type": "int (SDL_Renderer *, const SDL_Rect *, int)",
+  "params": [
+   "SDL_Renderer *",
+   "const SDL_Rect *",
+   "int"
+  ],
+  "variadic": false
+ },
+ "SDL_RenderCopy": {
+  "type": "int (SDL_Renderer *, SDL_Texture *, const SDL_Rect *, const SDL_Rect *)",
+  "params": [
+   "SDL_Renderer *",
+   "SDL_Texture *",
+   "const SDL_Rect *",
+   "const SDL_Rect *"
+  ],
+  "variadic": false
+ },
+ "SDL_RenderPresent": {
+  "type": "void (SDL_Renderer *)",
+  "params": [
+   "SDL_Renderer *"
+  ],
+  "variadic": false
+ },
+ "SDL_DestroyTexture": {
+  "type": "void (SDL_Texture *)",
+  "params": [
+   "SDL_Texture *"
+  ],
+  "variadic": false
+ },
+ "SDL_DestroyRenderer": {
+  "type": "void (SDL_Renderer *)",
+  "params": [
+   "SDL_Renderer *"
+  ],
+  "variadic": false
+ },
+ "SDL_GetTicks": {
+  "type": "Uint32 (void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_GetTicks64": {
+  "type": "Uint64 (void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_GetPerformanceCounter": {
+  "type": "Uint64 (void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_GetPerformanceFrequency": {
+  "type": "Uint64 (void)",
+  "params": [],
+  "variadic": false
+ },
+ "SDL_Delay": {
+  "type": "void (Uint32)",
+  "params": [
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_AddTimer": {
+  "type": "SDL_TimerID (Uint32, SDL_TimerCallback, void *)",
+  "params": [
+   "Uint32",
+   "SDL_TimerCallback",
+   "void *"
+  ],
+  "variadic": false
+ },
+ "SDL_RemoveTimer": {
+  "type": "SDL_bool (SDL_TimerID)",
+  "params": [
+   "SDL_TimerID"
+  ],
+  "variadic": false
+ },
+ "SDL_GetVersion": {
+  "type": "void (SDL_version *)",
+  "params": [
+   "SDL_version *"
+  ],
+  "variadic": false
+ },
+ "SDL_Init": {
+  "type": "int (Uint32)",
+  "params": [
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_InitSubSystem": {
+  "type": "int (Uint32)",
+  "params": [
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_QuitSubSystem": {
+  "type": "void (Uint32)",
+  "params": [
+   "Uint32"
+  ],
+  "variadic": false
+ },
+ "SDL_Quit": {
+  "type": "void (void)",
+  "params": [],
+  "variadic": false
+ }
+}
